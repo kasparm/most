@@ -1980,6 +1980,9 @@ end
 et_setup = toc(t0);
 t0 = tic;
 
+disp("core MOST code ran!");
+return
+
 % Call solver!
 mdo = mdi;
 if mpopt.most.solve_model
