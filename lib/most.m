@@ -2276,7 +2276,20 @@ if mpopt.most.solve_model
       for j = 1:mdo.idx.nj(t)
         mdo.results.ExpectedDispatch(:,t) = mdo.results.ExpectedDispatch(:,t) + ...
               mdo.CostWeights(1,j,t)/pp * mdo.flow(t,j,1).mpc.gen(:,PG);
+          % Unpacking dcline results. Need to be done at this location
+          % beacuse the dummy generators are removed from the mpc file and
+          % ng and size(mpc.gen,1) are not of same size anymore.
+          for k = 1:mdi.idx.nc(t,j)+1
+            mpc = mdo.flow(t,j,k).mpc;
+            if isfield(mpc, 'dcline')
+              mpc = run_userfcn(mpc.userfcn,'int2ext',mpc);
+              mdo.flow(t,j,k).mpc = mpc;
+            end
+          end
       end
+    end
+    if isfield(mdo.mpc, 'dcline')
+        mdo.mpc = run_userfcn(mdo.mpc.userfcn,'int2ext',mdo.mpc);
     end
     % If Cyclic storage, pull InitialStorage value out of x
     if ns && mdo.Storage.ForceCyclicStorage
