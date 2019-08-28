@@ -1133,7 +1133,7 @@ if mpopt.most.build_model
   % add the linear constraints. The args field in formulation is used to
   % pass vs and mpc.
   % dclinecost is not implemented yet.
-  if isfield(mpc, 'dcline')
+  if isfield(mpc, 'dcline') && toggle_dcline(mpc,'status')
       om.init_indexed_name('lin', 'dcline', {nt, nj_max, nc_max+1});
       for t = 1:nt
           for j = 1:mdi.idx.nj(t)
@@ -2281,15 +2281,23 @@ if mpopt.most.solve_model
           % ng and size(mpc.gen,1) are not of same size anymore.
           for k = 1:mdi.idx.nc(t,j)+1
             mpc = mdo.flow(t,j,k).mpc;
-            if isfield(mpc, 'dcline')
+            if isfield(mpc, 'dcline') && toggle_dcline(mpc,'status')
               mpc = run_userfcn(mpc.userfcn,'int2ext',mpc);
               mdo.flow(t,j,k).mpc = mpc;
             end
           end
       end
     end
-    if isfield(mdo.mpc, 'dcline')
+    if isfield(mdo.mpc, 'dcline') && toggle_dcline(mpc,'status')
+        n_dclines = size(mdo.mpc.dcline,1);
         mdo.mpc = run_userfcn(mdo.mpc.userfcn,'int2ext',mdo.mpc);
+        mdo_result_fields = fieldnames(mdo.results);
+        for i = 1:size(mdo_result_fields,1)
+            field = mdo_result_fields{i};
+            if ismatrix(mdo.results.(field))
+                mdo.results.(field) = mdo.results.(field)(1:(end-2*n_dclines),:);
+            end
+        end
     end
     % If Cyclic storage, pull InitialStorage value out of x
     if ns && mdo.Storage.ForceCyclicStorage
